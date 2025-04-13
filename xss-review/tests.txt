@@ -1,5 +1,4 @@
-// stored xss attack
-
+/// basic stored xss attack ///
 1. in the comments form, add a comment with a script in it:
 <script>alert("xss attack")</script>
 
@@ -19,3 +18,36 @@ if <script> tags are blocked, might be able to do HTML injection or partial inje
 <div onclick="alert('Stored XSS via onclick')">
   Click me
 </div>
+
+
+/// basic reflected xss attack ///
+essentially works by adding executable code into the URL query parameter
+1. adding the search parameter: '?q=<script>alert('Reflected XSS!');</script>'
+since server is returning the query parameter (req.query.q) back in the HTML unescaped, the browser will render and execute it as JS.
+
+2. other vectors:
+- add an image instead of a script in the query:
+q=<img src="x" onerror="alert('Reflected XSS via onerror')">
+
+- svg variation:
+q=<svg><script>alert('Reflected XSS in SVG')</script></svg>
+
+---> notice how when putting the payload in a <script></script> in the svg variation, we did not use double quotes,but when using it in the image, we did.
+Thats because:
+Inside <script> ... </script>, JavaScript code doesn’t need the same HTML attribute quoting rules. It’s just raw JavaScript. 
+The HTML parser only looks for <script> start and end tags. Everything in between is passed to the JS engine, which has its own syntax rules for strings. 
+But in an HTML attribute like <img onerror..> - Without quotes, the parser takes characters until it hits a space or > as the attribute value. 
+If it encounters certain special characters (like ' or () it might get confused and terminate the value prematurely.
+And when you use double quotes, The parser clearly sees the attribute value as alert('Test') – everything between the " characters is the attribute value.
+---> Summary:
+- Script Blocks (<script>…</script>) let you write raw JavaScript. No HTML attribute quoting rules apply inside them.
+- HTML Attributes (onerror="…") require quotes if the value has spaces or special characters. 
+This is because the HTML parser needs a clear start and end point for the attribute’s value.
+
+
+
+
+
+
+
+
