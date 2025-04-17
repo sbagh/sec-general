@@ -1,4 +1,4 @@
-/// basic stored xss attack ///
+/// basics of stored xss attack ///
 1. in the comments form, add a comment with a script in it:
 <script>alert("xss attack")</script>
 
@@ -20,7 +20,7 @@ if <script> tags are blocked, might be able to do HTML injection or partial inje
 </div>
 
 
-/// basic reflected xss attack ///
+/// basics of reflected xss attack ///
 essentially works by adding executable code into the URL query parameter
 1. adding the search parameter: '?q=<script>alert('Reflected XSS!');</script>'
 since server is returning the query parameter (req.query.q) back in the HTML unescaped, the browser will render and execute it as JS.
@@ -32,6 +32,11 @@ q=<img src="x" onerror="alert('Reflected XSS via onerror')">
 - svg variation:
 q=<svg><script>alert('Reflected XSS in SVG')</script></svg>
 
+- event Handlers
+q=<div onclick="alert('Reflected XSS via onclick')">Click me</div>
+
+
+----------------
 ---> notice how when putting the payload in a <script></script> in the svg variation, we did not use double quotes,but when using it in the image, we did.
 Thats because:
 Inside <script> ... </script>, JavaScript code doesn’t need the same HTML attribute quoting rules. It’s just raw JavaScript. 
@@ -43,6 +48,70 @@ And when you use double quotes, The parser clearly sees the attribute value as a
 - Script Blocks (<script>…</script>) let you write raw JavaScript. No HTML attribute quoting rules apply inside them.
 - HTML Attributes (onerror="…") require quotes if the value has spaces or special characters. 
 This is because the HTML parser needs a clear start and end point for the attribute’s value.
+
+-----------
+---> note:
+- Reflected XSS requires a response that echoes your input immediately. Always hit the endpoint that performs that reflection (/search in your case).
+- Stored XSS requires input that gets saved and later rendered (your /comments route).
+
+
+------- reflected xss summary:
+That URL‑based approach is popular because it’s easy to share in e‑mail, chat, ads, QR codes, etc. 
+The key feature that makes it reflected (not stored) is that the payload is not saved for later; it only lives inside that single request/response cycle.
+‑‑ but remember that any un‑sanitised data the server reflects right away can carry a reflected‑XSS payload:
+Delivery channel:	
+- Phishing link, malvertising
+    - Payload:	            ?q=<script>…</script>
+    - Delivery Channel:     Query string (URL)
+
+- Hidden auto‑submitting form on attacker site
+    - Payload:	            ?q=<script>…</script>
+    - Delivery Channel:     Query string (URL)
+
+- Attacker‑controlled proxy or custom client
+    - Payload:	           User‑Agent: <script>…	
+    - Delivery Channel:    HTTP header	
+
+- If app reflects location.hash server‑side
+    - Payload:	           #payload=<img onerror=…>	
+    - Delivery Channel:    Fragment/hash	
+
+
+
+/// basics of DOM based XSS ///
+
+Unlike reflected or stored XSS, DOM‑based XSS never touches your server’s response at all.
+Instead, JavaScript running in the browser reads attacker‑controlled data (URL, cookies, postMessage, etc.) and writes it back into the DOM in an unsafe way.
+The entire attack happens client‑side, so the malicious string is visible only in the victim’s browser.
+
+Why DOM XSS is tricky to detect?
+- The HTTP response is benign; no payload appears in any server logs.
+- Traditional server‑side filters (WAF, template auto‑escaping) never see the attack.
+- CSP without a strict nonce/strict-dynamic often won’t help, because no new <script> tag is created—the existing inline script itself is the culprit.
+
+❶ Attacker‑controlled source | Example read  | Typical payload snippet
+location.hash | #x=<svg…> | HTML/JS
+location.search | ?q=<img…> | HTML/JS
+document.cookie | Attacker sets via sub‑domain | <script>…</script>
+postMessage | Window message | Any string
+localStorage / sessionStorage | Pre‑set key | Any string
+
+❷ Dangerous sink | Why dangerous
+element.innerHTML = … | Interprets string as markup
+document.write( … ) | Injects into document, can add <script>
+eval( … ), setTimeout( …, 0 ) | Executes as code
+Template literal backtick${var} in an existing JS <script> | If var is untrusted
+
+
+example 1: – Using location.search
+Add this tiny script anywhere in a page:
+<script>
+  const q = new URLSearchParams(location.search).get('q');
+  if (q) {
+    document.body.insertAdjacentHTML('beforeend', q);   // sink
+  }
+</script>
+
 
 
 

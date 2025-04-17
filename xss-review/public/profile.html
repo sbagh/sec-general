@@ -1,26 +1,31 @@
 <!-- public/profile.html -->
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Profile</title>
-</head>
-<body>
-  <h2>User Profile</h2>
-  <p id="info"></p>
+   <head>
+      <meta charset="utf-8" />
+      <title>Profile</title>
+   </head>
+   <body>
+      <h2>User Profile</h2>
+      <p id="info"></p>
 
-  <script>
-    // Example DOM-based scenario:
-    // If you navigate to /profile.html#msg=<script>alert('XSS')</script>
-    // the code below will inject that script directly into the page.
-    const hash = window.location.hash.substring(1); // Remove leading '#'
-    const params = new URLSearchParams(hash);
-    const msg = params.get('msg');
-    if (msg) {
-      document.getElementById('info').innerHTML = msg;
-    }
-  </script>
+      <script>
+         const hash = window.location.hash.substring(1); // #msg=…
+         const params = new URLSearchParams(hash);
+         const msg = params.get("msg");
 
-  <p><a href="/">Back to Home</a></p>
-</body>
+         if (msg) {
+            document.getElementById("info").innerHTML = msg;
+         }
+
+         // Source (attacker‑controlled) → window.location.hash
+         // Sink (unsafe html) → document.getElementById("info").innerHTML
+         // The attacker can inject a script tag into the page using the hash
+         // and execute it by navigating to the page with the hash.
+         // so visiting /profile.html#msg=<img src=x onerror="alert('DOM XSS')"
+         // causes the script to inject that <img> tag and fire onerror.
+      </script>
+
+      <p><a href="/">Back to Home</a></p>
+   </body>
 </html>
